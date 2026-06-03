@@ -2,7 +2,7 @@
 
 ## Objective
 
-Demonstrate certificate lifecycle management use cases across enterprise environments.
+Demonstrate certificate lifecycle management use cases relevant in nearly all enterprise environments.
 
 ## Topics Covered
 
