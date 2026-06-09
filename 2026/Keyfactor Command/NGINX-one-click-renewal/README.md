@@ -4,39 +4,55 @@
 
 This lab demonstrates automated certificate issuance, deployment, and renewal for NGINX using Keyfactor Command.
 
-The demonstration shows how certificate lifecycle management can be automated to eliminate manual renewal processes while improving operational consistency and reducing risk.
+The implementation enables operational teams to automate certificate lifecycle management while reducing manual intervention and improving consistency.
 
 ## Demo Video
 
-🎥 Watch the demonstration:
+Watch the demonstration:
 
 https://youtu.be/P_BcPC6Haho
 
-## Objectives
-
-* Automate certificate issuance
-* Automate certificate deployment
-* Eliminate manual certificate replacement
-* Demonstrate Keyfactor Command automation workflows
-* Provide a reproducible implementation guide
-
-## Lab Assets
+## Lab Components
 
 ### Documentation
 
-Build guides and implementation instructions.
+Complete implementation guide in PDF, Markdown, and Word formats.
+
+Location:
+
+`docs/`
+
+### Examples
+
+Configuration examples and supporting reference files.
+
+Location:
+
+`examples/`
 
 ### Scripts
 
-Automation scripts used in the demonstration.
+Deployment and automation scripts used throughout the demonstration.
 
-### Artifacts
+Location:
 
-Configuration files and supporting assets.
+`scripts/`
+
+### Web Components
+
+Sample status page and supporting web assets.
+
+Location:
+
+`web/`
 
 ### Images
 
-Screenshots, diagrams, and architecture illustrations.
+Screenshots and visual references.
+
+Location:
+
+`images/`
 
 ## Technology
 
