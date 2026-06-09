@@ -1,0 +1,38 @@
+#!/bin/bash
+
+STAGED_CERT="/opt/keyfactor/nginx/staged/yourservername.domain.com.crt"
+ACTIVE_CERT="/etc/nginx/certs/yourservername.domain.com.crt"
+
+fmt_cert_date() {
+    TZ=America/Chicago date -d "$(echo "$1" | sed 's/ GMT$/ UTC/')" '+%Y-%m-%d %I:%M:%S %p %Z'
+}
+
+echo "==================== SERVER OS ===================="
+hostnamectl
+
+echo
+echo "==================== NGINX ===================="
+nginx -v 2>&1
+systemctl status nginx --no-pager | head -n 12
+
+echo
+echo "==================== STAGED CERTIFICATE ===================="
+
+STAGED_START="$(openssl x509 -in "$STAGED_CERT" -noout -startdate | sed 's/^notBefore=//')"
+STAGED_END="$(openssl x509 -in "$STAGED_CERT" -noout -enddate | sed 's/^notAfter=//')"
+
+openssl x509 -in "$STAGED_CERT" -noout -subject -issuer -serial
+
+echo "Valid From: $(fmt_cert_date "$STAGED_START")"
+echo "Valid To  : $(fmt_cert_date "$STAGED_END")"
+
+echo
+echo "==================== ACTIVE CERTIFICATE ===================="
+
+ACTIVE_START="$(openssl x509 -in "$ACTIVE_CERT" -noout -startdate | sed 's/^notBefore=//')"
+ACTIVE_END="$(openssl x509 -in "$ACTIVE_CERT" -noout -enddate | sed 's/^notAfter=//')"
+
+openssl x509 -in "$ACTIVE_CERT" -noout -subject -issuer -serial
+
+echo "Valid From: $(fmt_cert_date "$ACTIVE_START")"
+echo "Valid To  : $(fmt_cert_date "$ACTIVE_END")"

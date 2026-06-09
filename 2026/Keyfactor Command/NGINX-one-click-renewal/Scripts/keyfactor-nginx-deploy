@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+
+STAGED_CERT="/opt/keyfactor/nginx/staged/yourservername.domain.com.crt"
+STAGED_KEY="/opt/keyfactor/nginx/staged/yourservername.domain.com.key"
+
+LIVE_CERT="/etc/nginx/certs/yourservername.domain.com.crt"
+LIVE_KEY="/etc/nginx/private/yourservername.domain.com.key"
+
+test -s "$STAGED_CERT"
+test -s "$STAGED_KEY"
+
+install -o root -g root -m 0644 "$STAGED_CERT" "$LIVE_CERT"
+install -o root -g root -m 0600 "$STAGED_KEY" "$LIVE_KEY"
+
+nginx -t >/dev/null 2>&1
+systemctl reload nginx
