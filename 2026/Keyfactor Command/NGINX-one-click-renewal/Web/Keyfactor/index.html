@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Keyfactor Certificate Status Example</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <main class="page-shell" aria-label="TLS certificate status">
+    <section class="cert cert-top">
+      <div class="label">Current Certificate Serial Number:</div>
+      <div id="cert-serial" class="value">Loading certificate details...</div>
+    </section>
+
+    <section class="brand" aria-label="Keyfactor branded example">
+      <img src="assets/keyfactor-command-lite.png" alt="Keyfactor branded example" />
+    </section>
+
+    <section class="cert cert-bottom">
+      <div class="label">Current Certificate Validity Period:</div>
+      <div id="cert-validity" class="value">Loading certificate details...</div>
+    </section>
+  </main>
+
+  <script src="assets/cert-status.js"></script>
+</body>
+</html>
