@@ -1,16 +1,15 @@
 # Keyfactor Command
 
-## Objective
+## Available Demonstrations
 
-Demonstrate certificate lifecycle management use cases relevant in nearly all enterprise environments.
+### NGINX One-Click Certificate Renewal
 
-## Topics Covered
+Automated certificate issuance, deployment, and renewal for NGINX.
 
-- One-Click Certificate Renewals
-- Automated Certificate Renewals
+Demo Video:
 
-## Assets
+https://youtu.be/P_BcPC6Haho
 
-- Demo recording
-- Build documentation
-- Supporting diagrams
+Repository:
+
+./nginx-one-click-renewal
