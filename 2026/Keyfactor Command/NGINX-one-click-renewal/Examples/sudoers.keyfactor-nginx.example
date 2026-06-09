@@ -1,0 +1,6 @@
+# Keyfactor RFPEM post-job permissions for nginx certificate lifecycle automation.
+# Allows only the controlled nginx promotion script.
+
+Cmnd_Alias KEYFACTOR_NGINX_CMDS = /usr/local/sbin/keyfactor-nginx-deploy
+
+yourlinuxuser ALL=(root) NOPASSWD: KEYFACTOR_NGINX_CMDS
