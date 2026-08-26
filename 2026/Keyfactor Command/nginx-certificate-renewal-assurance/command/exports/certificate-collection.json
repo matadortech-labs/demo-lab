@@ -1,0 +1,12 @@
+{
+  "Id": 1002,
+  "Name": "DEMO-NGINX01 Active Daily Renewal Candidate Search",
+  "Description": "Automatic certificate renewal for the DEMO-NGINX01 web server",
+  "Content": "( CN -eq \"nginx01.example.com\" AND CertState -eq \"1\" AND ExpirationDate -ge \"%TODAY%\" AND ExpirationDate -le \"%TODAY+3%\" )",
+  "DuplicationField": "None",
+  "ShowOnDashboard": false,
+  "Favorite": false,
+  "EstimatedCertCount": 0,
+  "LastEstimated": null,
+  "HasQueryPermissions": false
+}

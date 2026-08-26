@@ -1,0 +1,26 @@
+{
+    "SchemaVersion":  "v1",
+    "UpdatedAtUtc":  "2026-07-09T21:27:27.5329722Z",
+    "Profiles":  [
+                     {
+                         "ProfileName":  "nginx-web-server-tls",
+                         "CommandServer":  "command.example.com",
+                         "AgentId":  "d46e9a2b-3754-5505-8658-90271a9fa7c4",
+                         "WorkflowDefinitionId":  "abb63aa3-bf6a-57db-8185-2019084aa09a",
+                         "CertificateStoreId":  "c3aeef2b-0dc7-5d5a-948e-5fcac55eb881",
+                         "ValidationScriptPath":  "C:\\KeyfactorScripts\\EndpointValidation\\Invoke-EndpointValidationProfile.ps1",
+                         "TimeoutSeconds":  300,
+                         "PollSeconds":  5,
+                         "CredentialStorePath":  "C:\\ProgramData\\Keyfactor\\ExtensionData\\EndpointValidation\\Secrets\\CommandApiCredential.json",
+                         "CredentialKeyPath":  "C:\\ProgramData\\Keyfactor\\ExtensionData\\EndpointValidation\\Secrets\\CommandApiCredential.key",
+                         "EvidenceCacheRoot":  "C:\\ProgramData\\Keyfactor\\ExtensionData\\EndpointValidation\\EvidenceCache",
+                         "Platform":  "NGINX",
+                         "Environment":  "Demo",
+                         "ServerName":  "nginx01.example.com",
+                         "ApplicationName":  "Example NGINX Application",
+                         "WebsiteName":  "Example NGINX Site",
+                         "WebsiteUrl":  "https://nginx01.example.com/keyfactor/",
+                         "WebsitePort":  "443"
+                     }
+                 ]
+}

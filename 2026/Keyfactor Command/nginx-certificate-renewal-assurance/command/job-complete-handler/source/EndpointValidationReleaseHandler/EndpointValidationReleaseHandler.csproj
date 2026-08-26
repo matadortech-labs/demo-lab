@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <AssemblyName>EndpointValidationReleaseHandler</AssemblyName>
+    <RootNamespace>MatadorTech.Keyfactor.EndpointValidation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Keyfactor.Platform.IOrchestratorJobCompleteHandler">
+      <HintPath>C:\Program Files\Keyfactor\Keyfactor Platform\WebAgentServices\Keyfactor.Platform.IOrchestratorJobCompleteHandler.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="Keyfactor.Logging">
+      <HintPath>C:\Program Files\Keyfactor\Keyfactor Platform\WebAgentServices\Keyfactor.Logging.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="Keyfactor.Orchestrators.Common">
+      <HintPath>C:\Program Files\Keyfactor\Keyfactor Platform\WebAgentServices\Keyfactor.Orchestrators.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+      <HintPath>C:\Program Files\Keyfactor\Keyfactor Platform\Service\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="Microsoft.Extensions.Options">
+      <HintPath>C:\Program Files\Keyfactor\Keyfactor Platform\Service\Microsoft.Extensions.Options.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

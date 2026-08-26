@@ -1,0 +1,10 @@
+{
+  "extensions": {
+    "Keyfactor.Orchestrators.Extensions.IOrchestratorJobExtension": {
+      "Custom.EndpointValidation": {
+        "assemblypath": "MatadorTech.Keyfactor.EndpointValidationCustomJob.dll",
+        "TypeFullName": "MatadorTech.Keyfactor.EndpointValidationCustomJob.EndpointValidationJobExtension"
+      }
+    }
+  }
+}

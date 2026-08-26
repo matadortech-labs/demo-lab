@@ -1,0 +1,20 @@
+{
+  "JobType": "EndpointValidation",
+  "CustomJobExtension": "Custom.EndpointValidation",
+  "RequiredJobProperties": [
+    "ValidationProfileName",
+    "WorkflowInstanceId",
+    "WorkflowDefinitionId",
+    "GateStepUniqueName",
+    "CertificateStoreId",
+    "ExpectedCertificateId",
+    "CorrelationId"
+  ],
+  "OptionalJobProperties": [
+    "WaitStepUniqueName",
+    "ValidationScriptPath",
+    "TimeoutSeconds"
+  ],
+  "DefaultValidationScriptPath": "C:\\KeyfactorScripts\\EndpointValidation\\Invoke-EndpointValidationProfile.ps1",
+  "DefaultTimeoutSeconds": 300
+}

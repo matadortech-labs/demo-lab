@@ -1,0 +1,15 @@
+# Example NGINX TLS virtual host for the renewal-assurance demo.
+# Adapt paths and application content to your environment.
+server {
+    listen 443 ssl;
+    server_name nginx01.example.com;
+
+    ssl_certificate     /etc/nginx/certs/nginx01.example.com.crt;
+    ssl_certificate_key /etc/nginx/private/nginx01.example.com.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+}

@@ -1,0 +1,9 @@
+# Install the ORCHESTRATOR-HOST public key for the service account used by validation.
+# Do not place a private key on DEMO-NGINX01.
+#
+# Example:
+# mkdir -p /home/svc_keyfactor/.ssh
+# echo "<PUBLIC KEY FROM ORCHESTRATOR-HOST>" >> /home/svc_keyfactor/.ssh/authorized_keys
+# chown -R svc_keyfactor:svc_keyfactor /home/svc_keyfactor/.ssh
+# chmod 700 /home/svc_keyfactor/.ssh
+# chmod 600 /home/svc_keyfactor/.ssh/authorized_keys

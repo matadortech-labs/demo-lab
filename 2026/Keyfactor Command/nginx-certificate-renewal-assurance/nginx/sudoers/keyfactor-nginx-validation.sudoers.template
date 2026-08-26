@@ -1,0 +1,3 @@
+# Allow the orchestrator validation account to run the proof command without an interactive password.
+# Replace svc_keyfactor if your implementation uses a different account.
+svc_keyfactor ALL=(root) NOPASSWD: /usr/local/bin/nginx-cert-status

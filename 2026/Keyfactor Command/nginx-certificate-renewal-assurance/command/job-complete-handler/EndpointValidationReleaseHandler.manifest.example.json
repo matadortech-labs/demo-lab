@@ -1,0 +1,23 @@
+{
+    "EndpointValidationReleaseHandler":  {
+                                             "assemblypath":  "EndpointValidationReleaseHandler\\EndpointValidationReleaseHandler.dll",
+                                             "TypeFullName":  "MatadorTech.Keyfactor.EndpointValidation.EndpointValidationReleaseHandler",
+                                             "Options":  {
+                                                             "JobTypes":  "\u003cRfpemJobTypeId\u003e,\u003cEndpointValidationJobTypeId\u003e",
+                                                             "EndpointValidationJobTypeName":  "EndpointValidation",
+                                                             "CustomJobTimeoutSeconds":  300,
+                                                             "GateStepUniqueName":  "WaitForEndpointValidation",
+                                                             "EnableCustomJobScheduling":  true,
+                                                             "EnableWorkflowRelease":  true,
+                                                             "RequireSuccessfulJobResult":  true,
+                                                             "RequireValidationPass":  true,
+                                                             "RequireMetadataUpdated":  true,
+                                                             "RequireValidationCertificateId":  true,
+                                                             "EnableEvidenceCache":  true,
+                                                             "EvidenceCacheRoot":  "C:\\ProgramData\\Keyfactor\\ExtensionData\\EndpointValidation\\EvidenceCache",
+                                                             "EvidenceCacheRetentionDays":  14,
+                                                             "RequirePreRenewalEvidenceForPostValidation":  false,
+                                                             "EndpointValidationProfileMappings":  "\u003cNGINX-CERTIFICATE-STORE-ID\u003e=nginx-web-server-tls"
+                                                         }
+                                         }
+}
