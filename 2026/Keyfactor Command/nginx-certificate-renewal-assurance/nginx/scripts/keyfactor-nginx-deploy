@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+STAGED_CERT="/opt/keyfactor/nginx/staged/nginx01.example.com.crt"
+STAGED_KEY="/opt/keyfactor/nginx/staged/nginx01.example.com.key"
+
+LIVE_CERT="/etc/nginx/certs/nginx01.example.com.crt"
+LIVE_KEY="/etc/nginx/private/nginx01.example.com.key"
+
+test -s "$STAGED_CERT"
+test -s "$STAGED_KEY"
+
+install -o root -g root -m 0644 "$STAGED_CERT" "$LIVE_CERT"
+install -o root -g root -m 0600 "$STAGED_KEY" "$LIVE_KEY"
+
+nginx -t >/dev/null 2>&1
+systemctl reload nginx
+
+sleep 5
+
+echo
+echo "===== DEPLOYMENT VALIDATION ====="
+nginx-cert-status

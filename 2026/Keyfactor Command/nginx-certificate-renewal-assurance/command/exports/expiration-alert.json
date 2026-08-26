@@ -1,0 +1,24 @@
+{
+  "Id": 1001,
+  "DisplayName": "DEMO-NGINX01 Scheduled Workflow Isolation Testing",
+  "Subject": null,
+  "Message": null,
+  "ExpirationWarningDays": 2,
+  "Recipients": [],
+  "CertificateQuery": {
+    "Id": 1002,
+    "Name": "DEMO-NGINX01 Active Daily Renewal Candidate Search"
+  },
+  "RegisteredEventHandler": null,
+  "EventHandlerParameters": [],
+  "UseWorkflows": true,
+  "WorkflowId": "abb63aa3-bf6a-57db-8185-2019084aa09a",
+  "WorkflowName": "NGINX Web Server Certificate Monitoring",
+  "WorkflowPublishedVersion": 1,
+  "WorkflowEnabled": true,
+  "Schedule": {
+    "Daily": {
+      "Time": "2026-01-01T12:00:00Z"
+    }
+  }
+}

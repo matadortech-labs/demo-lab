@@ -1,0 +1,426 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ==============================================================================
+# nginx-cert-status v2
+#
+# Purpose:
+#   Validate that NGINX is serving the renewed certificate by comparing:
+#     1. The staged certificate placed by Keyfactor
+#     2. The active certificate on disk used by NGINX
+#     3. The certificate actually served by NGINX over TLS
+#
+# Outputs:
+#   /opt/keyfactor/nginx/nginx-cert-status-last.txt
+#   /opt/keyfactor/nginx/nginx-cert-status-last.json
+# ==============================================================================
+
+SCHEMA_VERSION="1.0"
+VALIDATION_TYPE="CertificateRenewalProof"
+PLATFORM="NGINX"
+SCRIPT_NAME="nginx-cert-status"
+SCRIPT_VERSION="2.1"
+
+SERVER_NAME="${SERVER_NAME:-nginx01.example.com}"
+HTTPS_PORT="${HTTPS_PORT:-443}"
+CONNECT_HOST="${CONNECT_HOST:-$SERVER_NAME}"
+SNI_NAME="${SNI_NAME:-$SERVER_NAME}"
+ENDPOINT_URL="${ENDPOINT_URL:-https://${SERVER_NAME}:${HTTPS_PORT}/}"
+
+STAGED_CERT="${STAGED_CERT:-/opt/keyfactor/nginx/staged/nginx01.example.com.crt}"
+ACTIVE_CERT="${ACTIVE_CERT:-/etc/nginx/certs/nginx01.example.com.crt}"
+
+OUTPUT_DIR="${OUTPUT_DIR:-/opt/keyfactor/nginx}"
+TXT_OUTPUT="${TXT_OUTPUT:-${OUTPUT_DIR}/nginx-cert-status-last.txt}"
+JSON_OUTPUT="${JSON_OUTPUT:-${OUTPUT_DIR}/nginx-cert-status-last.json}"
+
+mkdir -p "$OUTPUT_DIR"
+
+TMP_SERVED_CERT="$(mktemp)"
+TMP_JSON="$(mktemp)"
+trap 'rm -f "$TMP_SERVED_CERT" "$TMP_JSON"' EXIT
+
+require_file() {
+    local file_path="$1"
+    local description="$2"
+
+    if [[ ! -s "$file_path" ]]; then
+        echo "ERROR: $description not found or empty: $file_path" >&2
+        exit 1
+    fi
+}
+
+get_subject() {
+    openssl x509 -in "$1" -noout -subject | sed 's/^subject=//'
+}
+
+get_issuer() {
+    openssl x509 -in "$1" -noout -issuer | sed 's/^issuer=//'
+}
+
+get_serial() {
+    openssl x509 -in "$1" -noout -serial \
+        | sed 's/^serial=//' \
+        | tr '[:lower:]' '[:upper:]'
+}
+
+get_fingerprint() {
+    local cert_path="$1"
+    local algorithm="$2"
+
+    openssl x509 -in "$cert_path" -noout -fingerprint "-$algorithm" \
+        | sed 's/^.*=//' \
+        | tr -d ':' \
+        | tr '[:lower:]' '[:upper:]'
+}
+
+get_not_before_raw() {
+    openssl x509 -in "$1" -noout -startdate | sed 's/^notBefore=//'
+}
+
+get_not_after_raw() {
+    openssl x509 -in "$1" -noout -enddate | sed 's/^notAfter=//'
+}
+
+date_to_utc_iso() {
+    local raw_date="$1"
+    date -u -d "$raw_date" '+%Y-%m-%dT%H:%M:%SZ'
+}
+
+date_to_local_display() {
+    local raw_date="$1"
+    date -d "$raw_date" '+%Y-%m-%d %I:%M:%S %p %Z'
+}
+
+get_not_before_utc() {
+    date_to_utc_iso "$(get_not_before_raw "$1")"
+}
+
+get_not_after_utc() {
+    date_to_utc_iso "$(get_not_after_raw "$1")"
+}
+
+get_not_before_display() {
+    date_to_local_display "$(get_not_before_raw "$1")"
+}
+
+get_not_after_display() {
+    date_to_local_display "$(get_not_after_raw "$1")"
+}
+
+get_san() {
+    local cert_path="$1"
+
+    openssl x509 -in "$cert_path" -noout -ext subjectAltName 2>/dev/null \
+        | awk '
+            /X509v3 Subject Alternative Name/ {getline; gsub(/^ +/, ""); print}
+        ' \
+        | sed 's/, /,/g' \
+        || true
+}
+
+get_nginx_version() {
+    nginx -v 2>&1 | sed 's/^nginx version: //'
+}
+
+get_nginx_active_state() {
+    systemctl is-active nginx 2>/dev/null || echo "unknown"
+}
+
+get_hostname_fqdn() {
+    hostname -f 2>/dev/null || hostname
+}
+
+get_certificate_json_vars() {
+    local prefix="$1"
+    local cert_path="$2"
+
+    local subject
+    local issuer
+    local serial
+    local sha1
+    local sha256
+    local not_before_utc
+    local not_after_utc
+    local san
+
+    subject="$(get_subject "$cert_path")"
+    issuer="$(get_issuer "$cert_path")"
+    serial="$(get_serial "$cert_path")"
+    sha1="$(get_fingerprint "$cert_path" "sha1")"
+    sha256="$(get_fingerprint "$cert_path" "sha256")"
+    not_before_utc="$(get_not_before_utc "$cert_path")"
+    not_after_utc="$(get_not_after_utc "$cert_path")"
+    san="$(get_san "$cert_path")"
+
+    export "${prefix}_PATH=$cert_path"
+    export "${prefix}_SUBJECT=$subject"
+    export "${prefix}_ISSUER=$issuer"
+    export "${prefix}_SERIAL=$serial"
+    export "${prefix}_SHA1=$sha1"
+    export "${prefix}_SHA256=$sha256"
+    export "${prefix}_NOT_BEFORE_UTC=$not_before_utc"
+    export "${prefix}_NOT_AFTER_UTC=$not_after_utc"
+    export "${prefix}_SAN=$san"
+}
+
+require_file "$STAGED_CERT" "Staged certificate"
+require_file "$ACTIVE_CERT" "Active certificate"
+
+echo | openssl s_client \
+    -connect "${CONNECT_HOST}:${HTTPS_PORT}" \
+    -servername "$SNI_NAME" \
+    -showcerts 2>/dev/null \
+    | openssl x509 -outform PEM > "$TMP_SERVED_CERT"
+
+require_file "$TMP_SERVED_CERT" "Served certificate retrieved from TLS endpoint"
+
+STAGED_SERIAL="$(get_serial "$STAGED_CERT")"
+ACTIVE_SERIAL="$(get_serial "$ACTIVE_CERT")"
+SERVED_SERIAL="$(get_serial "$TMP_SERVED_CERT")"
+
+STAGED_SHA256="$(get_fingerprint "$STAGED_CERT" "sha256")"
+ACTIVE_SHA256="$(get_fingerprint "$ACTIVE_CERT" "sha256")"
+SERVED_SHA256="$(get_fingerprint "$TMP_SERVED_CERT" "sha256")"
+
+STAGED_ACTIVE_SERIAL_MATCH="FAIL"
+ACTIVE_SERVED_SERIAL_MATCH="FAIL"
+STAGED_ACTIVE_SHA256_MATCH="FAIL"
+ACTIVE_SERVED_SHA256_MATCH="FAIL"
+
+if [[ "$STAGED_SERIAL" == "$ACTIVE_SERIAL" ]]; then
+    STAGED_ACTIVE_SERIAL_MATCH="PASS"
+fi
+
+if [[ "$ACTIVE_SERIAL" == "$SERVED_SERIAL" ]]; then
+    ACTIVE_SERVED_SERIAL_MATCH="PASS"
+fi
+
+if [[ "$STAGED_SHA256" == "$ACTIVE_SHA256" ]]; then
+    STAGED_ACTIVE_SHA256_MATCH="PASS"
+fi
+
+if [[ "$ACTIVE_SHA256" == "$SERVED_SHA256" ]]; then
+    ACTIVE_SERVED_SHA256_MATCH="PASS"
+fi
+
+NGINX_ACTIVE_STATE="$(get_nginx_active_state)"
+NGINX_VERSION="$(get_nginx_version)"
+HOSTNAME_FQDN="$(get_hostname_fqdn)"
+VALIDATED_AT_UTC="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+VALIDATED_AT_LOCAL="$(date '+%Y-%m-%d %I:%M:%S %p %Z')"
+
+VALIDATION_STATUS="FAIL"
+VALIDATION_MESSAGE="NGINX certificate validation failed."
+
+if [[ "$STAGED_ACTIVE_SERIAL_MATCH" == "PASS" && \
+      "$ACTIVE_SERVED_SERIAL_MATCH" == "PASS" && \
+      "$STAGED_ACTIVE_SHA256_MATCH" == "PASS" && \
+      "$ACTIVE_SERVED_SHA256_MATCH" == "PASS" && \
+      "$NGINX_ACTIVE_STATE" == "active" ]]; then
+
+    VALIDATION_STATUS="PASS"
+    VALIDATION_MESSAGE="NGINX is serving the renewed certificate. Staged, active on-disk, and TLS-served certificates all match."
+else
+    if [[ "$NGINX_ACTIVE_STATE" != "active" ]]; then
+        VALIDATION_MESSAGE="NGINX certificate validation failed. NGINX service state is '$NGINX_ACTIVE_STATE'."
+    elif [[ "$STAGED_ACTIVE_SERIAL_MATCH" != "PASS" || "$STAGED_ACTIVE_SHA256_MATCH" != "PASS" ]]; then
+        VALIDATION_MESSAGE="NGINX certificate validation failed. Staged certificate does not match active on-disk certificate."
+    elif [[ "$ACTIVE_SERVED_SERIAL_MATCH" != "PASS" || "$ACTIVE_SERVED_SHA256_MATCH" != "PASS" ]]; then
+        VALIDATION_MESSAGE="NGINX certificate validation failed. Active on-disk certificate does not match TLS-served certificate."
+    fi
+fi
+
+get_certificate_json_vars "STAGED" "$STAGED_CERT"
+get_certificate_json_vars "ACTIVE" "$ACTIVE_CERT"
+get_certificate_json_vars "SERVED" "$TMP_SERVED_CERT"
+
+{
+    echo
+    echo "==================== NGINX CERTIFICATE UPDATE STATUS ===================="
+    if [[ "$VALIDATION_STATUS" == "PASS" ]]; then
+        echo "NGINX Served Certificate has been successfully updated and verified!"
+    else
+        echo "NGINX Served Certificate validation failed!"
+    fi
+    echo "Status              : $VALIDATION_STATUS"
+    echo "Message             : $VALIDATION_MESSAGE"
+    echo "Validated At        : $VALIDATED_AT_LOCAL"
+    echo "Validated At UTC    : $VALIDATED_AT_UTC"
+    echo "Validation Script   : $SCRIPT_NAME $SCRIPT_VERSION"
+    echo
+
+    echo "==================== SERVER ===================="
+    echo "Server Name         : $SERVER_NAME"
+    echo "Hostname FQDN       : $HOSTNAME_FQDN"
+    echo "Endpoint URL        : $ENDPOINT_URL"
+    echo "Connect Host        : $CONNECT_HOST"
+    echo "HTTPS Port          : $HTTPS_PORT"
+    echo "SNI Name            : $SNI_NAME"
+    echo
+
+    echo "==================== NGINX ===================="
+    echo "NGINX Version       : $NGINX_VERSION"
+    echo "NGINX State         : $NGINX_ACTIVE_STATE"
+    systemctl status nginx --no-pager || true
+    echo
+
+    echo "==================== STAGED CERTIFICATE ON DISK ===================="
+    echo "File Path           : $STAGED_CERT"
+    echo "Subject             : $(get_subject "$STAGED_CERT")"
+    echo "Issuer              : $(get_issuer "$STAGED_CERT")"
+    echo "Serial              : $STAGED_SERIAL"
+    echo "SHA1 Thumbprint     : $(get_fingerprint "$STAGED_CERT" "sha1")"
+    echo "SHA256 Thumbprint   : $STAGED_SHA256"
+    echo "Valid From          : $(get_not_before_display "$STAGED_CERT")"
+    echo "Valid To            : $(get_not_after_display "$STAGED_CERT")"
+    echo "SAN                 : $(get_san "$STAGED_CERT")"
+    echo
+
+    echo "==================== ACTIVE CERTIFICATE ON DISK ===================="
+    echo "File Path           : $ACTIVE_CERT"
+    echo "Subject             : $(get_subject "$ACTIVE_CERT")"
+    echo "Issuer              : $(get_issuer "$ACTIVE_CERT")"
+    echo "Serial              : $ACTIVE_SERIAL"
+    echo "SHA1 Thumbprint     : $(get_fingerprint "$ACTIVE_CERT" "sha1")"
+    echo "SHA256 Thumbprint   : $ACTIVE_SHA256"
+    echo "Valid From          : $(get_not_before_display "$ACTIVE_CERT")"
+    echo "Valid To            : $(get_not_after_display "$ACTIVE_CERT")"
+    echo "SAN                 : $(get_san "$ACTIVE_CERT")"
+    echo
+
+    echo "==================== NGINX VERIFIED SERVED CERTIFICATE ===================="
+    echo "Source              : TLS handshake"
+    echo "Endpoint            : https://${SERVER_NAME}:${HTTPS_PORT}"
+    echo "Subject             : $(get_subject "$TMP_SERVED_CERT")"
+    echo "Issuer              : $(get_issuer "$TMP_SERVED_CERT")"
+    echo "Serial              : $SERVED_SERIAL"
+    echo "SHA1 Thumbprint     : $(get_fingerprint "$TMP_SERVED_CERT" "sha1")"
+    echo "SHA256 Thumbprint   : $SERVED_SHA256"
+    echo "Valid From          : $(get_not_before_display "$TMP_SERVED_CERT")"
+    echo "Valid To            : $(get_not_after_display "$TMP_SERVED_CERT")"
+    echo "SAN                 : $(get_san "$TMP_SERVED_CERT")"
+    echo
+
+    echo "==================== CERTIFICATE COMPARISON ===================="
+    echo "Staged Serial       : $STAGED_SERIAL"
+    echo "Active Serial       : $ACTIVE_SERIAL"
+    echo "Served Serial       : $SERVED_SERIAL"
+    echo "Staged SHA256       : $STAGED_SHA256"
+    echo "Active SHA256       : $ACTIVE_SHA256"
+    echo "Served SHA256       : $SERVED_SHA256"
+    echo
+    echo "Staged vs Active Serial : $STAGED_ACTIVE_SERIAL_MATCH"
+    echo "Active vs Served Serial : $ACTIVE_SERVED_SERIAL_MATCH"
+    echo "Staged vs Active SHA256 : $STAGED_ACTIVE_SHA256_MATCH"
+    echo "Active vs Served SHA256 : $ACTIVE_SERVED_SHA256_MATCH"
+    echo
+    echo "RESULT              : $VALIDATION_STATUS - $VALIDATION_MESSAGE"
+} | tee "$TXT_OUTPUT"
+
+export SCHEMA_VERSION
+export VALIDATION_TYPE
+export PLATFORM
+export SCRIPT_NAME
+export SCRIPT_VERSION
+export SERVER_NAME
+export HOSTNAME_FQDN
+export ENDPOINT_URL
+export CONNECT_HOST
+export HTTPS_PORT
+export SNI_NAME
+export NGINX_VERSION
+export NGINX_ACTIVE_STATE
+export VALIDATED_AT_UTC
+export VALIDATION_STATUS
+export VALIDATION_MESSAGE
+export STAGED_ACTIVE_SERIAL_MATCH
+export ACTIVE_SERVED_SERIAL_MATCH
+export STAGED_ACTIVE_SHA256_MATCH
+export ACTIVE_SERVED_SHA256_MATCH
+
+python3 <<'PY' > "$TMP_JSON"
+import json
+import os
+
+def env(name, default=""):
+    return os.environ.get(name, default)
+
+def cert(prefix, include_path=True, source=None, host=None, port=None, sni=None):
+    data = {
+        "Subject": env(f"{prefix}_SUBJECT"),
+        "Issuer": env(f"{prefix}_ISSUER"),
+        "SerialNumber": env(f"{prefix}_SERIAL"),
+        "Sha1Thumbprint": env(f"{prefix}_SHA1"),
+        "Sha256Thumbprint": env(f"{prefix}_SHA256"),
+        "NotBeforeUtc": env(f"{prefix}_NOT_BEFORE_UTC"),
+        "NotAfterUtc": env(f"{prefix}_NOT_AFTER_UTC"),
+        "SubjectAlternativeNames": env(f"{prefix}_SAN")
+    }
+
+    path = env(f"{prefix}_PATH")
+    if include_path and path:
+        data = {"Path": path, **data}
+
+    if source:
+        data = {
+            "Source": source,
+            "Host": host,
+            "Port": int(port),
+            "Sni": sni,
+            **data
+        }
+
+    return data
+
+proof = {
+    "SchemaVersion": env("SCHEMA_VERSION"),
+    "ValidationType": env("VALIDATION_TYPE"),
+    "Platform": env("PLATFORM"),
+    "Script": {
+        "Name": env("SCRIPT_NAME"),
+        "Version": env("SCRIPT_VERSION")
+    },
+    "Server": {
+        "ServerName": env("SERVER_NAME"),
+        "HostnameFqdn": env("HOSTNAME_FQDN")
+    },
+    "Endpoint": {
+        "Url": env("ENDPOINT_URL"),
+        "ConnectHost": env("CONNECT_HOST"),
+        "Port": int(env("HTTPS_PORT", "443")),
+        "Sni": env("SNI_NAME")
+    },
+    "Application": {
+        "Name": "NGINX",
+        "Version": env("NGINX_VERSION"),
+        "ServiceState": env("NGINX_ACTIVE_STATE")
+    },
+    "ValidationStatus": env("VALIDATION_STATUS"),
+    "ValidationMessage": env("VALIDATION_MESSAGE"),
+    "ValidatedAtUtc": env("VALIDATED_AT_UTC"),
+    "StagedCertificate": cert("STAGED", include_path=True),
+    "ActiveCertificate": cert("ACTIVE", include_path=True),
+    "ServedCertificate": cert(
+        "SERVED",
+        include_path=False,
+        source="TLS handshake",
+        host=env("SERVER_NAME"),
+        port=env("HTTPS_PORT", "443"),
+        sni=env("SNI_NAME")
+    ),
+    "Comparisons": {
+        "StagedVsActiveSerial": env("STAGED_ACTIVE_SERIAL_MATCH"),
+        "ActiveVsServedSerial": env("ACTIVE_SERVED_SERIAL_MATCH"),
+        "StagedVsActiveSha256": env("STAGED_ACTIVE_SHA256_MATCH"),
+        "ActiveVsServedSha256": env("ACTIVE_SERVED_SHA256_MATCH")
+    }
+}
+
+print(json.dumps(proof, indent=2))
+PY
+
+install -m 0644 "$TMP_JSON" "$JSON_OUTPUT"
+chmod 0644 "$TXT_OUTPUT" "$JSON_OUTPUT"
+
+exit 0

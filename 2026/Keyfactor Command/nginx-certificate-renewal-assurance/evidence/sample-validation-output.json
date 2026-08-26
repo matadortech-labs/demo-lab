@@ -1,0 +1,30 @@
+{
+  "SchemaVersion": "1.0",
+  "ValidationStatus": "PASS",
+  "ValidationProfileName": "nginx-web-server-tls",
+  "ServerName": "nginx01.example.com",
+  "WebsiteUrl": "https://nginx01.example.com/",
+  "CertificateStoreId": "0e977acf-24af-5d88-bdb8-5c2ded0d2d56",
+  "WorkflowDefinitionId": "343429b4-b7b9-553a-bf58-5c29a8b0371f",
+  "CorrelationId": "03c2e76f-cc08-592c-895c-246427f4fe9f",
+  "PreviousCertificate": {
+    "SerialNumber": "11223344556677889900AABBCCDDEEFF",
+    "Sha1Thumbprint": "1111111111111111111111111111111111111111",
+    "Sha256Thumbprint": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "ServedCertificate": {
+    "SerialNumber": "FFEEDDCCBBAA00998877665544332211",
+    "Sha1Thumbprint": "2222222222222222222222222222222222222222",
+    "Sha256Thumbprint": "2222222222222222222222222222222222222222222222222222222222222222",
+    "Subject": "CN=nginx01.example.com",
+    "San": "DNS:nginx01.example.com"
+  },
+  "Checks": {
+    "TlsHandshake": "PASS",
+    "EndpointReachable": "PASS",
+    "HostnameSanMatch": "PASS",
+    "CommandInventoryMatch": "PASS",
+    "EndpointServingRenewedCertificate": "PASS",
+    "MetadataUpdated": "PASS"
+  }
+}

@@ -1,0 +1,4 @@
+# Allow the Keyfactor deployment account to run the controlled NGINX promotion command.
+# Replace nginxadmin if your implementation uses a different account.
+Cmnd_Alias KEYFACTOR_NGINX_CMDS = /usr/local/sbin/keyfactor-nginx-deploy
+nginxadmin ALL=(root) NOPASSWD: KEYFACTOR_NGINX_CMDS

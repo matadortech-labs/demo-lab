@@ -1,0 +1,22 @@
+{
+  "SchemaVersion": "1.0",
+  "Description": "Application ownership registry for Keyfactor endpoint validation metadata enrichment.",
+  "Applications": [
+    {
+      "Platform": "NGINX",
+      "Environment": "Demo",
+      "ServerName": "nginx01.example.com",
+      "WebsiteName": "Example NGINX Site",
+      "WebsiteUrl": "https://nginx01.example.com/keyfactor/",
+      "ApplicationName": "Example NGINX Application",
+      "ApplicationOwner": "Example NGINX Application Team",
+      "ApplicationOwnerEmail": "app-owner@example.com",
+      "Notes": "Owner information is manually registered because application ownership is not discovered from Command inventory or endpoint certificate proof."
+    }
+  ]
+}
+
+
+
+
+
