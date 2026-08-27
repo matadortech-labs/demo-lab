@@ -2,7 +2,7 @@
 
 This use case demonstrates a custom, application-centric TLS certificate renewal assurance process using Keyfactor Command, Keyfactor Universal Orchestrator, and an NGINX web server.
 
-The objective is not merely to renew a certificate. The workflow provides evidence that the renewed certificate was deployed to the target application and is the certificate actually being served over TLS.
+The objective is not merely to renew a certificate. The workflow provides evidence that the renewed certificate was deployed to the target application and the certificate is actually being served over TLS.
 
 > **Reference implementation:** This is an art-of-the-possible implementation. It is not a single out-of-the-box Keyfactor feature. It combines native Keyfactor capabilities with custom scripts, a custom Universal Orchestrator job extension, a Command-side job-completion handler, and target-side NGINX validation scripts.
 
