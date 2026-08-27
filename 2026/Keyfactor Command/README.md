@@ -1,15 +1,15 @@
-# Keyfactor Command
+# Keyfactor Command Use-Case Demos
 
-## Available Demonstrations
+Reference implementations demonstrating certificate lifecycle automation,
+machine identity management, and application-centric assurance using
+Keyfactor Command and Universal Orchestrator.
+
+## Demos
 
 ### NGINX One-Click Certificate Renewal
+Operator-driven certificate renewal and deployment for NGINX.
 
-Automated certificate issuance, deployment, and renewal for NGINX.
-
-Demo Video:
-
-https://youtu.be/P_BcPC6Haho
-
-Repository:
-
-./nginx-one-click-renewal
+### NGINX Certificate Renewal Assurance
+Closed-loop certificate renewal assurance that verifies the application
+endpoint is actually serving the renewed certificate and records validation
+evidence in Keyfactor Command.
