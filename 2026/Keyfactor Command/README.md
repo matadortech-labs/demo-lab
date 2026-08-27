@@ -6,7 +6,7 @@ Command and Universal Orchestrator.
 
 ## Demos
 
-### [NGINX One-Click Certificate Renewal](./NGINX-one-click-renewal/)
+### [NGINX One-Click Certificate Renewal](./nginx-one-click-renewal/)
 
 Operator-driven certificate renewal and deployment for NGINX.
 
